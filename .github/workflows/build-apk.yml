@@ -33,14 +33,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # The gradle-wrapper.jar bundled in the zip can fail GitHub's
-      # wrapper checksum validation if it got altered/corrupted during
-      # packaging. Regenerate a genuine one using a real Gradle install
-      # before anything else touches gradlew.
-      - name: Regenerate Gradle wrapper
+      # setup-gradle validates every gradle-wrapper.jar in the repo the
+      # instant it runs — including this first call — so validation must
+      # be disabled here too, before we ever get a chance to regenerate
+      # the jar below. We replace it with a genuine one immediately after,
+      # so disabling this check here is safe.
+      - name: Install Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+          validate-wrappers: false
 
       - name: Rebuild wrapper files
         working-directory: GridHQ
@@ -48,6 +50,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
 
       - name: Grant execute permission for gradlew
         run: chmod +x GridHQ/gradlew
