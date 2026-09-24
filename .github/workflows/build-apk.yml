@@ -33,6 +33,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # The gradle-wrapper.jar bundled in the zip can fail GitHub's
+      # wrapper checksum validation if it got altered/corrupted during
+      # packaging. Regenerate a genuine one using a real Gradle install
+      # before anything else touches gradlew.
+      - name: Regenerate Gradle wrapper
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Rebuild wrapper files
+        working-directory: GridHQ
+        run: gradle wrapper --gradle-version 8.9 --distribution-type bin
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
