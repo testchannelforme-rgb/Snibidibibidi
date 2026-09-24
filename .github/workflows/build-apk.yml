@@ -1,0 +1,50 @@
+name: Build GridHQ APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # This step unzips your uploaded zip file.
+      # It assumes the zip (e.g. MonopostoChampionshipManager_COMPLETE.zip)
+      # is committed at the root of the repo. Adjust the filename below
+      # to match exactly what you upload.
+      - name: Unzip project
+        run: |
+          ZIP_FILE=$(find . -maxdepth 1 -iname "*.zip" | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No zip file found at repo root. Skipping unzip (project may already be unzipped)."
+          else
+            echo "Unzipping $ZIP_FILE"
+            unzip -o "$ZIP_FILE" -d .
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x GridHQ/gradlew
+
+      - name: Build debug APK
+        working-directory: GridHQ
+        run: ./gradlew --no-daemon assembleDebug --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GridHQ-debug-apk
+          path: GridHQ/app/build/outputs/apk/debug/*.apk
